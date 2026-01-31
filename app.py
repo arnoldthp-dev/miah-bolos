@@ -433,7 +433,7 @@ elif st.session_state.pagina_atual == "Analítico de vendas":
             df_visual[col] = df_visual[col].apply(formatar_moeda)
 
         # 6. EXIBIÇÃO
-        total_periodo = df_final['Total Final'].sum()
+        total_periodo = df_final[df_final['Status'] == 'PAGA']['Total Final'].sum()
         st.markdown(f"### 💰 RECEITA TOTAL NO PERÍODO: {formatar_moeda(total_periodo)}")
         
         # Exibe o dataframe formatado
