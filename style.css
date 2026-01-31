@@ -1,0 +1,157 @@
+/* style.css - RESET TOTAL MIAH */
+
+/* 1. FUNDO E CORES BASE */
+.stApp, div[data-testid="stDialog"] div[role="dialog"] {
+    background-color: #FDFBF7 !important;
+}
+
+h1, h2, h3, p, span, label, .stMarkdown { 
+    color: #2C2C2C !important; 
+    text-transform: uppercase !important;
+}
+
+/* 2. BORDAS DOS CARDS (VITRINE E CARRINHO) */
+[data-testid="stVerticalBlock"] > div > div[data-testid="stVerticalBlock"] {
+    background-color: #FFFFFF !important;
+    border: 0.2px solid #E0E0E0 !important;
+    border-radius: 10px !important;
+    padding: 15px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+}
+
+/* 3. CAMPOS DE ENTRADA E DROPDOWN (RESET) */
+input, div[data-baseweb="select"] > div, div[data-baseweb="base-input"] {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    border: 0.2px solid #CCCCCC !important;
+}
+
+div[data-baseweb="select"] [data-baseweb="icon"], 
+div[data-baseweb="select"] div[role="presentation"] {
+    border-left: none !important;
+}
+
+/* 4. MATAR BOTÕES +/- DO DESCONTO */
+div[data-testid="stNumberInput"] button {
+    display: none !important;
+}
+
+/* 5. BOTÕES MIAH (AZUL E VERDE) */
+button, div.stButton > button {
+    background-color: #8DA9C4 !important; 
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    height: 48px !important;
+    font-weight: 600 !important;
+}
+
+button:has(p:contains("FINALIZADO")), button:has(p:contains("FECHAR")), 
+button:has(p:contains("ADICIONAR")), button:has(p:contains("+")) {
+    background-color: #9DBEBB !important; 
+}
+
+/* 6. MODAL: BOTÕES LADO A LADO E IGUAIS */
+div[data-testid="stDialog"] [data-testid="column"] .stButton button {
+    width: 100% !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    font-size: 11px !important;
+}
+
+/* 7. FORMA DE PAGAMENTO - RESOLUÇÃO FINAL MESMA LINHA */
+
+/* Força o container pai a não quebrar linha de jeito nenhum */
+div[data-testid="stRadio"] > div[role="radiogroup"] {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+/* Estiliza a label como se fosse o próprio botão */
+div[data-testid="stRadio"] label {
+    flex: 1 1 0 !important; /* Força todos a terem exatamente o mesmo tamanho */
+    background-color: #EEEEEE !important;
+    border: 0.5px solid #CCCCCC !important;
+    border-radius: 5px !important;
+    padding: 10px 16px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-width: 0 !important; /* Essencial para não quebrar */
+}
+
+/* ESCONDE A BOLINHA E O ESPAÇO DELA */
+div[data-testid="stRadio"] label div[data-testid="stRadioButtonCustomObject"],
+div[data-testid="stRadio"] label span {
+    display: none !important;
+}
+
+/* FORÇA O TEXTO A APARECER */
+div[data-testid="stRadio"] label div[data-testid="stMarkdownContainer"] {
+    width: 100% !important;
+    text-align: center !important;
+}
+
+div[data-testid="stRadio"] label div[data-testid="stMarkdownContainer"] p {
+    color: #2C2C2C !important;
+    font-size: 11px !important; /* Tamanho seguro para 4 botões */
+    font-weight: 700 !important;
+    margin: 0 !important;
+    white-space: nowrap !important; /* Garante que o texto não suma */
+    overflow: visible !important;
+}
+
+/* ESTADO SELECIONADO */
+div[data-testid="stRadio"] label:has(input:checked) {
+    background-color: #8DA9C4 !important;
+    border-color: #8DA9C4 !important;
+}
+
+div[data-testid="stRadio"] label:has(input:checked) p {
+    color: white !important;
+}
+
+/* 8. TABELA DO MODAL (COM CABEÇALHO E ALINHAMENTO) */
+.miah-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.miah-table th { background-color: #F1F4F9; padding: 10px; font-size: 11px; color: #4682B4; text-align: center; }
+.miah-table td { border-bottom: 0.2px solid #F0F0F0; padding: 10px; text-align: center; font-size: 12px; }
+
+.total-destaque {
+    background: #F1F4F9;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    color: #4682B4 !important;
+    font-weight: 700 !important;
+    margin: 20px 0 !important;
+    font-size: 20px !important;
+}
+
+/* 9. CONTROLES DO CARRINHO (PEQUENOS) */
+[data-testid="column"] button:has(p:contains("➕")), 
+[data-testid="column"] button:has(p:contains("➖")), 
+[data-testid="column"] button:has(p:contains("X")) {
+    height: 28px !important;
+    width: 28px !important;
+    min-width: 28px !important;
+    padding: 0px !important;
+    font-size: 10px !important;
+    background-color: #EEEEEE !important;
+    color: #2C2C2C !important;
+    border: 0.2px solid #CCCCCC !important;
+    margin: 0 2px !important;
+}
+
+[data-testid="column"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-testid="column"]:first-child {
+    justify-content: flex-start !important;
+}
