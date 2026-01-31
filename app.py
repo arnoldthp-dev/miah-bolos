@@ -1,16 +1,17 @@
 import streamlit as st
+import os
 from supabase import create_client
+from dotenv import load_dotenv
 
-# 1. Buscando as credenciais de forma segura
-# O Streamlit vai procurar isso no painel "Secrets" que você configurou
-url = st.secrets["SUPABASE_URL"]
-key = st.secrets["SUPABASE_ANON_KEY"]
+# Carrega o .env apenas se ele existir (localmente)
+load_dotenv()
 
-# 2. Inicializando o cliente
+# Tenta pegar do ambiente (Vercel) ou do Streamlit Secrets
+url = os.getenv("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
+key = os.getenv("SUPABASE_ANON_KEY") or st.secrets.get("SUPABASE_ANON_KEY")
+
 supabase = create_client(url, key)
 
-import os
-from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime, timedelta
 import io

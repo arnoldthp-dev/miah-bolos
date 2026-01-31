@@ -1,0 +1,10 @@
+{
+  "framework": "python",
+  "installCommand": "pip install -r requirements.txt",
+  "routes": [
+    {
+      "src": "(.*)",
+      "dest": "app.py"
+    }
+  ]
+}
