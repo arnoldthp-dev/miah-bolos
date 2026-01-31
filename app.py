@@ -1,7 +1,16 @@
 import streamlit as st
+from supabase import create_client
+
+# 1. Buscando as credenciais de forma segura
+# O Streamlit vai procurar isso no painel "Secrets" que você configurou
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_ANON_KEY"]
+
+# 2. Inicializando o cliente
+supabase = create_client(url, key)
+
 import os
 from dotenv import load_dotenv
-from supabase import create_client
 import pandas as pd
 from datetime import datetime, timedelta
 import io
