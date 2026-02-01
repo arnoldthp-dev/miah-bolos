@@ -215,7 +215,7 @@ def fechar_venda_modal():
 # --- 3. SIDEBAR DE NAVEGAÇÃO ---
 
 with st.sidebar:
-    st.markdown("<h2 style='font-size: 20px; padding-left: 5px;'>MIAH Bolos e Salgados</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='font-size: 20px; padding-left: 5px;'>🍰MIAH Bolos e Salgados🧁</h2>", unsafe_allow_html=True)
     
     if st.button("🛒 INICIAR NOVA VENDA", use_container_width=True):
         st.session_state.pagina_atual = "PDV"
@@ -228,7 +228,6 @@ with st.sidebar:
     if st.button("Dashboard", use_container_width=True): st.session_state.pagina_atual = "Dashboard"; st.rerun()
 
     st.markdown('<div class="sap-header">📦 Estoque</div>', unsafe_allow_html=True)
-    if st.button("Contagem de itens", use_container_width=True): st.session_state.pagina_atual = "Contagem de itens"; st.rerun()
     if st.button("Lançar baixas/perdas", use_container_width=True): st.session_state.pagina_atual = "Lançar baixas/perdas"; st.rerun()
     if st.button("Relatório de estoque", use_container_width=True): st.session_state.pagina_atual = "Relatório de estoque"; st.rerun()
 
@@ -248,10 +247,11 @@ with st.sidebar:
 # --- 4. LÓGICA DAS TELAS ---
 
 if st.session_state.pagina_atual == "PDV":
-    st.title("MIAH BOLOS E SALGADOS")
+    st.title("🍰🧁 MIAH BOLOS E SALGADOS 🍰🧁")
 
     if st.session_state.venda_id is None:
-        st.subheader("IDENTIFICAÇÃO DO ATENDIMENTO")
+        st.markdown('<h1 style="font-size: 28px; font-weight: bold;">INICIAR ATENDIMENTO</h1>', unsafe_allow_html=True)
+        #st.subheader("IDENTIFICAÇÃO DO ATENDIMENTO")
         # FILTRO ATIVO: eq("ativo", True)
         clis_db = supabase.table("clientes").select("codigo, nome, telefone").eq("ativo", True).execute()
         dict_clis = {f"{c['codigo']} - {c['nome']}": c for c in clis_db.data}
@@ -524,32 +524,187 @@ elif st.session_state.pagina_atual == "Dashboard":
     if st.button("Voltar ao PDV"):
         st.session_state.pagina_atual = "PDV"; st.rerun()
 
-elif st.session_state.pagina_atual == "Contagem de itens":
-    st.title("Lançamento de estoque")
+elif st.session_state.pagina_atual == "Cadastro de itens":
+    st.markdown('<h1 style="font-size: 28px; font-weight: bold;">ATUALIZAR INFORMAÇÕES DO ITEM</h1>', unsafe_allow_html=True)
+    
+    # Busca produtos para o selectbox
+    prods_db = supabase.table("produtos").select("codigo, nome, preco, custo").eq("ativo", True).eq("tipo", "VENDA").execute()
+    
+    if prods_db.data:
+        # Criamos um dicionário que guarda todos os dados do produto para consulta rápida
+        opcoes = {f"{p['codigo']} - {p['nome'].upper()}": p for p in prods_db.data}
+        selecionado = st.selectbox("BUSCAR PRODUTO", options=[""] + list(opcoes.keys()))
+        
+        if selecionado:
+            produto_info = opcoes[selecionado]
+            cod = produto_info['codigo']
+            
+            # Busca saldo atual no estoque
+            est_res = supabase.table("estoque").select("quantidade").eq("codigo_produto", cod).single().execute()
+            qtd_atual = est_res.data['quantidade'] if est_res.data else 0
+            
+            # Mostra os valores atuais para referência
+            col_info1, col_info2, col_info3 = st.columns(3)
+            col_info1.metric("Saldo Atual", f"{qtd_atual}")
+            col_info2.metric("Preço Atual", f"R$ {produto_info['preco']:.2f}")
+            col_info3.metric("Custo Atual", f"R$ {produto_info['custo']:.2f}")
+            
+            st.divider()
+            
+            # Inputs de atualização (começam vazios ou zerados)
+            # Usamos value=None ou um valor padrão para identificar se o usuário mexeu
+            nova_qtd = st.number_input("NOVA QUANTIDADE NO ESTOQUE (Deixe igual para não mudar)", min_value=0.0, step=1.0, value=float(qtd_atual))
+            novo_preco = st.number_input("NOVO PREÇO DE VENDA (R$)", min_value=0.0, step=0.01, value=float(produto_info['preco']))
+            novo_custo = st.number_input("NOVO CUSTO (R$)", min_value=0.0, step=0.01, value=float(produto_info['custo']))
+
+            if st.button("✅ SALVAR ALTERAÇÕES", type="primary", use_container_width=True):
+                try:
+                    # 1. Atualiza Estoque (Se houve mudança na quantidade)
+                    if nova_qtd != float(qtd_atual):
+                        supabase.rpc("atualizar_estoque_manual", {
+                            "p_codigo_produto": cod, 
+                            "p_nova_quantidade": nova_qtd
+                        }).execute()
+
+                    # 2. Atualiza Preço e Custo (Se houve mudança)
+                    updates = {}
+                    if novo_preco != float(produto_info['preco']):
+                        updates["preco"] = novo_preco
+                    if novo_custo != float(produto_info['custo']):
+                        updates["custo"] = novo_custo
+                    
+                    if updates:
+                        supabase.table("produtos").update(updates).eq("codigo", cod).execute()
+
+                    st.success("✅ Todas as alterações foram salvas com sucesso!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro ao atualizar: {e}")
+
+    if st.button("Voltar"): 
+        st.session_state.pagina_atual = "PDV"
+        st.rerun()
+
+elif st.session_state.pagina_atual == "Lançar baixas/perdas":
+    st.markdown('<h1 style="font-size: 28px; font-weight: bold;">⚠️ REGISTRAR BAIXA / PERDA</h1>', unsafe_allow_html=True)
+    
+    # 1. Busca produtos ativos
     prods_db = supabase.table("produtos").select("codigo, nome").eq("ativo", True).eq("tipo", "VENDA").execute()
+    
     if prods_db.data:
         opcoes = {f"{p['codigo']} - {p['nome'].upper()}": p['codigo'] for p in prods_db.data}
         selecionado = st.selectbox("BUSCAR PRODUTO", options=[""] + list(opcoes.keys()))
+        
         if selecionado:
-            cod = opcoes[selecionado]; est_res = supabase.table("estoque").select("quantidade").eq("codigo_produto", cod).single().execute()
-            st.info(f"Saldo atual: **{est_res.data['quantidade'] if est_res.data else 0}**")
-            nova_qtd = st.number_input("NOVA QUANTIDADE", min_value=0.0, step=1.0)
-            if st.button("✅ ATUALIZAR", type="primary", use_container_width=True):
-                supabase.rpc("atualizar_estoque_manual", {"p_codigo_produto": cod, "p_nova_quantidade": nova_qtd}).execute()
-                st.success("Atualizado!"); st.rerun()
-    if st.button("Voltar"): st.session_state.pagina_atual = "PDV"; st.rerun()
+            cod = opcoes[selecionado]
+            
+            # Busca saldo atual para evitar baixar mais do que tem (opcional)
+            est_res = supabase.table("estoque").select("quantidade").eq("codigo_produto", cod).single().execute()
+            qtd_atual = est_res.data['quantidade'] if est_res.data else 0
+            
+            st.warning(f"Saldo atual em estoque: **{qtd_atual}**")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                qtd_baixa = st.number_input("QUANTIDADE PARA BAIXA", min_value=0.1, step=1.0)
+            with col2:
+                motivo = st.selectbox("MOTIVO DA BAIXA", 
+                                    options=["BRINDE", "CONSUMO", "PREPARO INCORRETO", "VENCIMENTO"])
+            
+            # Se escolher "Outros", abre campo para texto livre
+            obs = ""
+            if motivo == "Outros":
+                obs = st.text_input("ESPECIFIQUE O MOTIVO")
+            
+            if st.button("❌ CONFIRMAR BAIXA", type="primary", use_container_width=True):
+                if qtd_baixa > qtd_atual:
+                    st.error("A quantidade de baixa não pode ser maior que o saldo em estoque!")
+                else:
+                    try:
+                        # A. Registra na tabela de perdas_estoque
+                        motivo_final = obs if motivo == "Outros" else motivo
+                        dados_perda = {
+                            "codigo_item": cod,
+                            "quantidade": qtd_baixa,
+                            "motivo": motivo_final
+                        }
+                        supabase.table("perdas_estoque").insert(dados_perda).execute()
+                        
+                        # B. Atualiza o estoque (Subtraindo)
+                        nova_qtd = qtd_atual - qtd_baixa
+                        # Usando a mesma lógica do seu RPC ou update direto
+                        supabase.table("estoque").update({"quantidade": nova_qtd}).eq("codigo_produto", cod).execute()
+                        
+                        st.success(f"Baixa de {qtd_baixa} unidades registrada com sucesso!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Erro ao processar baixa: {e}")
+
+    if st.button("Voltar"): 
+        st.session_state.pagina_atual = "PDV"
+        st.rerun()
 
 elif st.session_state.pagina_atual == "Relatório de estoque":
-    st.title("📋 RELATÓRIO GERAL DE ESTOQUE")
-    res_prod = supabase.table("produtos").select("codigo, nome, preco, custo, ativo").eq("tipo", "VENDA").execute()
+    import io
+
+    st.markdown('<h1 style="font-size: 28px; font-weight: bold;">RELATÓRIO GERAL DE ESTOQUE</h1>', unsafe_allow_html=True)
+    
+    # 1. Busca os dados (Ajustado para buscar o NOME da categoria via relacionamento)
+    # Nota: Se o nome da sua tabela de categorias não for 'categorias', mude abaixo.
+    res_prod = supabase.table("produtos").select("codigo, nome, preco, custo, ativo, categorias(nome)").eq("tipo", "VENDA").execute()
     res_est = supabase.table("estoque").select("codigo_produto, quantidade").execute()
+    
     if res_prod.data:
-        df = pd.merge(pd.DataFrame(res_prod.data), pd.DataFrame(res_est.data), left_on='codigo', right_on='codigo_produto', how='left')
-        st.dataframe(df, use_container_width=True, hide_index=True)
-    if st.button("Voltar"): st.session_state.pagina_atual = "PDV"; st.rerun()
+        df_p = pd.DataFrame(res_prod.data)
+        
+        # Ajusta a coluna de categoria que vem como dicionário {'nome': 'Exemplo'}
+        if 'categorias' in df_p.columns:
+            df_p['CATEGORIA'] = df_p['categorias'].apply(lambda x: x['nome'] if isinstance(x, dict) else "Sem Categoria")
+            df_p = df_p.drop(columns=['categorias'])
+
+        df_e = pd.DataFrame(res_est.data)
+        
+        # 2. Merge e limpeza
+        df = pd.merge(df_p, df_e, left_on='codigo', right_on='codigo_produto', how='left')
+        df = df.drop(columns=['codigo_produto'])
+        
+        # 3. Status e Formatação de nomes de colunas
+        df['ativo'] = df['ativo'].map({True: 'ATIVO', False: 'INATIVO'})
+        df = df.rename(columns={'ativo': 'STATUS', 'codigo': 'CÓDIGO ITEM', 'nome': 'PRODUTO', 'preco': 'PREÇO VENDA', 'custo': 'CUSTO', 'quantidade': 'QUANTIDADE'})
+        
+        # Criar cópia formatada para visualização
+        df_view = df.copy()
+        
+        # 4. Formatação de Moeda R$ (Visual apenas)
+        for col in ['PREÇO VENDA', 'CUSTO']:
+            df_view[col] = df_view[col].apply(lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        # Reordenar colunas para ficar visualmente melhor
+        ordem_colunas = ['CÓDIGO ITEM', 'PRODUTO', 'CATEGORIA', 'PREÇO VENDA', 'CUSTO', 'QUANTIDADE', 'STATUS']
+        df_view = df_view[ordem_colunas]
+
+        # Exibir Grid
+        st.dataframe(df_view, use_container_width=True, hide_index=True)
+        
+        # --- BOTÃO PARA EXTRAIR EXCEL ---
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Estoque')
+        
+        st.download_button(
+            label="📥 Extrair para Excel",
+            data=buffer.getvalue(),
+            file_name=f"relatorio_estoque_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    if st.button("Voltar"): 
+        st.session_state.pagina_atual = "PDV"
+        st.rerun()
 
 elif st.session_state.pagina_atual == "Cadastro de clientes":
-    st.title("👥 GESTÃO DE CLIENTES")
+    st.markdown('<h1 style="font-size: 28px; font-weight: bold;">👥 CADASTRO DE CLIENTES</h1>', unsafe_allow_html=True)
+
     def carregar_clientes():
         res = supabase.table("clientes").select("*").eq("ativo", True).order("id", desc=True).execute()
         return pd.DataFrame(res.data)
